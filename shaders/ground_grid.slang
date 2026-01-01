@@ -23,7 +23,7 @@ cbuffer PushConstants {
 VSOutput vertMain(VSInput input) {
     VSOutput o;
     o.position = mul(pc.mvp, float4(input.position, 1.0));
-    o.world    = input.position;
+    o.world    = input.position + (input.color.xyz * 1e-8);
     return o;
 }
 
