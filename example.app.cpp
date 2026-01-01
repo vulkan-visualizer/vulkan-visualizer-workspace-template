@@ -35,7 +35,7 @@ namespace {
         auto* s = static_cast<InputState*>(glfwGetWindowUserPointer(w));
         if (!s) return;
 
-        const bool down = (action == GLFW_PRESS);
+        const bool down = action == GLFW_PRESS;
         if (button == GLFW_MOUSE_BUTTON_LEFT) s->lmb = down;
         if (button == GLFW_MOUSE_BUTTON_MIDDLE) s->mmb = down;
         if (button == GLFW_MOUSE_BUTTON_RIGHT) s->rmb = down;
@@ -189,8 +189,8 @@ void pngp::vis::rays::RaysInspector::run() {
         // ====================================================================
         // Acquire swapchain image and sync to start a new frame.
         // ====================================================================
-        const auto ar = vk::frame::begin_frame(ctx, swapchain, frames, frame_index);
-        if (!ar.ok || ar.need_recreate) {
+        const auto [ok, need_recreate, image_index] = vk::frame::begin_frame(ctx, swapchain, frames, frame_index);
+        if (!ok || need_recreate) {
             // =================================================================
             // Swapchain is invalid (resize/minimize). Recreate dependent resources.
             // =================================================================
@@ -231,25 +231,25 @@ void pngp::vis::rays::RaysInspector::run() {
         // Respect ImGui capture flags so the UI can own the mouse/keyboard.
         // ====================================================================
         vk::camera::CameraInput ci{};
-        ci.lmb = (!block_mouse) && input.lmb;
-        ci.mmb = (!block_mouse) && input.mmb;
-        ci.rmb = (!block_mouse) && input.rmb;
+        ci.lmb = !block_mouse && input.lmb;
+        ci.mmb = !block_mouse && input.mmb;
+        ci.rmb = !block_mouse && input.rmb;
 
-        ci.mouse_dx = (!block_mouse) ? input.dx : 0.0f;
-        ci.mouse_dy = (!block_mouse) ? input.dy : 0.0f;
-        ci.scroll   = (!block_mouse) ? input.scroll : 0.0f;
+        ci.mouse_dx = !block_mouse ? input.dx : 0.0f;
+        ci.mouse_dy = !block_mouse ? input.dy : 0.0f;
+        ci.scroll   = !block_mouse ? input.scroll : 0.0f;
 
-        ci.shift = (!block_kbd) && (input.keys[GLFW_KEY_LEFT_SHIFT] || input.keys[GLFW_KEY_RIGHT_SHIFT]);
-        ci.ctrl  = (!block_kbd) && (input.keys[GLFW_KEY_LEFT_CONTROL] || input.keys[GLFW_KEY_RIGHT_CONTROL]);
-        ci.alt   = (!block_kbd) && (input.keys[GLFW_KEY_LEFT_ALT] || input.keys[GLFW_KEY_RIGHT_ALT]);
-        ci.space = (!block_kbd) && (input.keys[GLFW_KEY_SPACE]);
+        ci.shift = !block_kbd && (input.keys[GLFW_KEY_LEFT_SHIFT] || input.keys[GLFW_KEY_RIGHT_SHIFT]);
+        ci.ctrl  = !block_kbd && (input.keys[GLFW_KEY_LEFT_CONTROL] || input.keys[GLFW_KEY_RIGHT_CONTROL]);
+        ci.alt   = !block_kbd && (input.keys[GLFW_KEY_LEFT_ALT] || input.keys[GLFW_KEY_RIGHT_ALT]);
+        ci.space = !block_kbd && input.keys[GLFW_KEY_SPACE];
 
-        ci.forward  = (!block_kbd) && input.keys[GLFW_KEY_W];
-        ci.backward = (!block_kbd) && input.keys[GLFW_KEY_S];
-        ci.left     = (!block_kbd) && input.keys[GLFW_KEY_A];
-        ci.right    = (!block_kbd) && input.keys[GLFW_KEY_D];
-        ci.down     = (!block_kbd) && input.keys[GLFW_KEY_Q];
-        ci.up       = (!block_kbd) && input.keys[GLFW_KEY_E];
+        ci.forward  = !block_kbd && input.keys[GLFW_KEY_W];
+        ci.backward = !block_kbd && input.keys[GLFW_KEY_S];
+        ci.left     = !block_kbd && input.keys[GLFW_KEY_A];
+        ci.right    = !block_kbd && input.keys[GLFW_KEY_D];
+        ci.down     = !block_kbd && input.keys[GLFW_KEY_Q];
+        ci.up       = !block_kbd && input.keys[GLFW_KEY_E];
 
         // ====================================================================
         // Update camera matrices (view/projection) for this frame.
@@ -272,12 +272,12 @@ void pngp::vis::rays::RaysInspector::run() {
         // ====================================================================
         // Record GPU work for this frame (grid + ImGui).
         // ====================================================================
-        record_commands(frame_index, ar.image_index);
+        record_commands(frame_index, image_index);
 
         // ====================================================================
         // Present the frame; recreate swapchain if presentation fails.
         // ====================================================================
-        if (vk::frame::end_frame(ctx, swapchain, frames, frame_index, ar.image_index)) {
+        if (vk::frame::end_frame(ctx, swapchain, frames, frame_index, image_index)) {
             vk::swapchain::recreate_swapchain(ctx, surface, swapchain);
             vk::frame::on_swapchain_recreated(ctx, swapchain, frames);
             vk::imgui::set_min_image_count(imgui, 2);
