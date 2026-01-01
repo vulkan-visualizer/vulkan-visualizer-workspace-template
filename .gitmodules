@@ -1,0 +1,3 @@
+[submodule "vulkan-visualizer"]
+	path = vulkan-visualizer
+	url = https://github.com/vulkan-visualizer/vulkan-visualizer.git
